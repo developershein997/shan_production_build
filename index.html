@@ -202,6 +202,147 @@
       backgroundMusic.addEventListener('play', () => isMusicPlaying = true);
       backgroundMusic.addEventListener('pause', () => isMusicPlaying = false);
 
+      // Enhanced fullscreen functionality for Telegram and other WebView browsers
+      function toggleFullscreen() {
+        const canvas = document.querySelector("#unity-canvas");
+        const container = document.querySelector("#unity-container");
+        
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+            !document.mozFullScreenElement && !document.msFullscreenElement) {
+          // Enter fullscreen
+          const elementToFullscreen = canvas || container;
+          
+          if (elementToFullscreen.requestFullscreen) {
+            elementToFullscreen.requestFullscreen().catch(err => {
+              console.log('Fullscreen request failed:', err);
+              // Fallback: try to make canvas fullscreen with CSS
+              makeCanvasFullscreen();
+            });
+          } else if (elementToFullscreen.webkitRequestFullscreen) {
+            elementToFullscreen.webkitRequestFullscreen();
+          } else if (elementToFullscreen.mozRequestFullScreen) {
+            elementToFullscreen.mozRequestFullScreen();
+          } else if (elementToFullscreen.msRequestFullscreen) {
+            elementToFullscreen.msRequestFullscreen();
+          } else {
+            // Fallback for browsers that don't support fullscreen API
+            makeCanvasFullscreen();
+          }
+        } else {
+          // Exit fullscreen
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          } else {
+            // Fallback: restore normal canvas size
+            restoreCanvasSize();
+          }
+        }
+      }
+
+      // Fallback fullscreen method using CSS for Telegram browser
+      function makeCanvasFullscreen() {
+        const canvas = document.querySelector("#unity-canvas");
+        const container = document.querySelector("#unity-container");
+        
+        // Hide navigation and footer
+        document.querySelector('nav').style.display = 'none';
+        document.querySelector('footer').style.display = 'none';
+        
+        // Make canvas fill entire screen
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100vw';
+        container.style.height = '100vh';
+        container.style.zIndex = '9999';
+        container.style.background = '#000';
+        
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.objectFit = 'contain';
+        
+        // Update fullscreen button icon
+        updateFullscreenIcon(true);
+      }
+
+      // Restore normal canvas size
+      function restoreCanvasSize() {
+        const canvas = document.querySelector("#unity-canvas");
+        const container = document.querySelector("#unity-container");
+        
+        // Show navigation and footer
+        document.querySelector('nav').style.display = 'block';
+        document.querySelector('footer').style.display = 'block';
+        
+        // Restore container
+        container.style.position = 'absolute';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100%';
+        container.style.height = '100%';
+        container.style.zIndex = 'auto';
+        container.style.background = 'transparent';
+        
+        // Restore canvas size
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+        } else {
+          canvas.style.width = '960px';
+          canvas.style.height = '600px';
+        }
+        canvas.style.objectFit = 'initial';
+        
+        // Update fullscreen button icon
+        updateFullscreenIcon(false);
+      }
+
+      // Update fullscreen button icon based on state
+      function updateFullscreenIcon(isFullscreen) {
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (isFullscreen) {
+          fullscreenBtn.innerHTML = `
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414 1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          `;
+        } else {
+          fullscreenBtn.innerHTML = `
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414 1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          `;
+        }
+      }
+
+      // Listen for fullscreen changes to update UI
+      document.addEventListener('fullscreenchange', () => {
+        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || 
+                               document.mozFullScreenElement || document.msFullscreenElement);
+        updateFullscreenIcon(isFullscreen);
+      });
+
+      document.addEventListener('webkitfullscreenchange', () => {
+        const isFullscreen = !!document.webkitFullscreenElement;
+        updateFullscreenIcon(isFullscreen);
+      });
+
+      document.addEventListener('mozfullscreenchange', () => {
+        const isFullscreen = !!document.mozFullScreenElement;
+        updateFullscreenIcon(isFullscreen);
+      });
+
+      document.addEventListener('MSFullscreenChange', () => {
+        const isFullscreen = !!document.msFullscreenElement;
+        updateFullscreenIcon(isFullscreen);
+      });
+
       // Enhanced orientation check with modern UI
       function checkOrientation() {
         const message = document.getElementById("rotate-message");
@@ -263,8 +404,8 @@
         if (type !== 'error') {
           setTimeout(() => {
             if (warningBanner.contains(div)) {
-              warningBanner.removeChild(div);
-              updateBannerVisibility();
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
             }
           }, 5000);
         }
@@ -309,9 +450,15 @@
         }).then((unityInstance) => {
           loadingBar.classList.add('hidden');
           
-          // Fullscreen functionality
+          // Enhanced fullscreen functionality for Telegram browser compatibility
           fullscreenBtn.onclick = () => {
+            // Try Unity's fullscreen first
+            if (unityInstance && unityInstance.SetFullscreen) {
             unityInstance.SetFullscreen(1);
+            } else {
+              // Fallback for Telegram browser and other WebView browsers
+              toggleFullscreen();
+            }
           };
           
           // Auto-start background music (with user interaction)
