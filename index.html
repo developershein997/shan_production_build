@@ -245,7 +245,7 @@
         }
       }
 
-      // Fallback fullscreen method using CSS for Telegram browser
+      // Enhanced fallback fullscreen method for Telegram browser
       function makeCanvasFullscreen() {
         const canvas = document.querySelector("#unity-canvas");
         const container = document.querySelector("#unity-container");
@@ -254,7 +254,7 @@
         document.querySelector('nav').style.display = 'none';
         document.querySelector('footer').style.display = 'none';
         
-        // Make canvas fill entire screen
+        // Make canvas fill entire screen with Telegram-specific optimizations
         container.style.position = 'fixed';
         container.style.top = '0';
         container.style.left = '0';
@@ -262,19 +262,59 @@
         container.style.height = '100vh';
         container.style.zIndex = '9999';
         container.style.background = '#000';
+        container.style.overflow = 'hidden';
         
+        // Telegram browser specific canvas sizing
         canvas.style.width = '100vw';
         canvas.style.height = '100vh';
         canvas.style.objectFit = 'contain';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '50%';
+        canvas.style.left = '50%';
+        canvas.style.transform = 'translate(-50%, -50%)';
+        canvas.style.maxWidth = '100vw';
+        canvas.style.maxHeight = '100vh';
+        
+        // Add a floating fullscreen exit button for Telegram
+        addFloatingExitButton();
         
         // Update fullscreen button icon
         updateFullscreenIcon(true);
+      }
+
+      // Add floating exit button for Telegram fullscreen
+      function addFloatingExitButton() {
+        // Remove existing floating button if any
+        const existingBtn = document.getElementById('floating-exit-btn');
+        if (existingBtn) {
+          existingBtn.remove();
+        }
+        
+        const floatingBtn = document.createElement('button');
+        floatingBtn.id = 'floating-exit-btn';
+        floatingBtn.innerHTML = `
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        `;
+        floatingBtn.className = 'fixed top-4 right-4 z-50 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all duration-300';
+        floatingBtn.onclick = () => {
+          restoreCanvasSize();
+        };
+        
+        document.body.appendChild(floatingBtn);
       }
 
       // Restore normal canvas size
       function restoreCanvasSize() {
         const canvas = document.querySelector("#unity-canvas");
         const container = document.querySelector("#unity-container");
+        
+        // Remove floating exit button
+        const floatingBtn = document.getElementById('floating-exit-btn');
+        if (floatingBtn) {
+          floatingBtn.remove();
+        }
         
         // Show navigation and footer
         document.querySelector('nav').style.display = 'block';
@@ -288,8 +328,16 @@
         container.style.height = '100%';
         container.style.zIndex = 'auto';
         container.style.background = 'transparent';
+        container.style.overflow = 'visible';
         
-        // Restore canvas size
+        // Restore canvas size and positioning
+        canvas.style.position = 'static';
+        canvas.style.top = 'auto';
+        canvas.style.left = 'auto';
+        canvas.style.transform = 'none';
+        canvas.style.maxWidth = 'none';
+        canvas.style.maxHeight = 'none';
+        
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
           canvas.style.width = '100%';
           canvas.style.height = '100%';
