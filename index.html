@@ -191,6 +191,146 @@
       backgroundMusic.addEventListener('play', () => isMusicPlaying = true);
       backgroundMusic.addEventListener('pause', () => isMusicPlaying = false);
 
+      // Enhanced fullscreen mode with proper UI scaling
+      function toggleFullscreenMode() {
+        const canvas = document.querySelector("#unity-canvas");
+        const container = document.querySelector("#unity-container");
+        
+        if (!document.fullscreenElement) {
+          // Enter fullscreen with proper scaling
+          enterFullscreenMode(canvas, container);
+        } else {
+          // Exit fullscreen
+          exitFullscreenMode(canvas, container);
+        }
+      }
+
+      function enterFullscreenMode(canvas, container) {
+        // Hide navigation
+        document.querySelector('nav').style.display = 'none';
+        
+        // Make container fullscreen
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100vw';
+        container.style.height = '100vh';
+        container.style.zIndex = '9999';
+        container.style.background = '#000';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        
+        // Scale canvas to maintain aspect ratio and proper UI spacing
+        const aspectRatio = 960 / 600; // Original game aspect ratio
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const screenAspectRatio = screenWidth / screenHeight;
+        
+        let canvasWidth, canvasHeight;
+        
+        if (screenAspectRatio > aspectRatio) {
+          // Screen is wider than game - fit to height
+          canvasHeight = screenHeight;
+          canvasWidth = canvasHeight * aspectRatio;
+        } else {
+          // Screen is taller than game - fit to width
+          canvasWidth = screenWidth;
+          canvasHeight = canvasWidth / aspectRatio;
+        }
+        
+        // Apply scaling with proper positioning
+        canvas.style.width = canvasWidth + 'px';
+        canvas.style.height = canvasHeight + 'px';
+        canvas.style.objectFit = 'contain';
+        canvas.style.position = 'relative';
+        canvas.style.transform = 'none';
+        
+        // Add floating exit button
+        addFloatingExitButton();
+        
+        // Update fullscreen button icon
+        updateFullscreenIcon(true);
+      }
+
+      function exitFullscreenMode(canvas, container) {
+        // Remove floating exit button
+        const floatingBtn = document.getElementById('floating-exit-btn');
+        if (floatingBtn) {
+          floatingBtn.remove();
+        }
+        
+        // Show navigation
+        document.querySelector('nav').style.display = 'block';
+        
+        // Restore container
+        container.style.position = 'absolute';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100%';
+        container.style.height = '100%';
+        container.style.zIndex = 'auto';
+        container.style.background = 'transparent';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        
+        // Restore canvas size
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+        } else {
+          canvas.style.width = '960px';
+          canvas.style.height = '600px';
+        }
+        canvas.style.objectFit = 'initial';
+        canvas.style.position = 'static';
+        canvas.style.transform = 'none';
+        
+        // Update fullscreen button icon
+        updateFullscreenIcon(false);
+      }
+
+      // Add floating exit button for fullscreen
+      function addFloatingExitButton() {
+        const existingBtn = document.getElementById('floating-exit-btn');
+        if (existingBtn) {
+          existingBtn.remove();
+        }
+        
+        const floatingBtn = document.createElement('button');
+        floatingBtn.id = 'floating-exit-btn';
+        floatingBtn.innerHTML = `
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        `;
+        floatingBtn.className = 'fixed top-4 right-4 z-50 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all duration-300';
+        floatingBtn.onclick = () => {
+          exitFullscreenMode(document.querySelector("#unity-canvas"), document.querySelector("#unity-container"));
+        };
+        
+        document.body.appendChild(floatingBtn);
+      }
+
+      // Update fullscreen button icon
+      function updateFullscreenIcon(isFullscreen) {
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (isFullscreen) {
+          fullscreenBtn.innerHTML = `
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414 1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          `;
+        } else {
+          fullscreenBtn.innerHTML = `
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414 1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          `;
+        }
+      }
+
       // Enhanced orientation check with modern UI
       function checkOrientation() {
         const message = document.getElementById("rotate-message");
@@ -298,9 +438,15 @@
         }).then((unityInstance) => {
           loadingBar.classList.add('hidden');
           
-          // Fullscreen functionality
+          // Enhanced fullscreen functionality with proper UI scaling
           fullscreenBtn.onclick = () => {
-            unityInstance.SetFullscreen(1);
+            // Try Unity's fullscreen first
+            if (unityInstance && unityInstance.SetFullscreen) {
+              unityInstance.SetFullscreen(1);
+            } else {
+              // Fallback: CSS-based fullscreen with proper scaling
+              toggleFullscreenMode();
+            }
           };
           
           // Auto-start background music (with user interaction)
