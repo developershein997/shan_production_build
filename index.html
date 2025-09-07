@@ -82,6 +82,19 @@
           max-width: 90vw;
         }
       }
+      
+      /* Fullscreen mode UI preservation */
+      #unity-canvas[style*="position: relative"] {
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+      }
+      
+      /* Force Unity UI elements to maintain spacing in fullscreen */
+      body.fullscreen-mode #unity-canvas {
+        transform-origin: center center !important;
+        backface-visibility: hidden !important;
+        perspective: 1000px !important;
+      }
     </style>
   </head>
   <body class="gradient-bg min-h-screen overflow-hidden">
@@ -206,6 +219,9 @@
       }
 
       function enterFullscreenMode(canvas, container) {
+        // Add fullscreen class to body for CSS targeting
+        document.body.classList.add('fullscreen-mode');
+        
         // Hide navigation
         document.querySelector('nav').style.display = 'none';
         
@@ -239,12 +255,24 @@
           canvasHeight = canvasWidth / aspectRatio;
         }
         
-        // Apply scaling with proper positioning
+        // Apply scaling with proper positioning and UI preservation
         canvas.style.width = canvasWidth + 'px';
         canvas.style.height = canvasHeight + 'px';
         canvas.style.objectFit = 'contain';
         canvas.style.position = 'relative';
         canvas.style.transform = 'none';
+        canvas.style.imageRendering = 'crisp-edges';
+        canvas.style.imageRendering = '-webkit-optimize-contrast';
+        
+        // Force Unity to maintain UI scaling
+        if (unityInstance && unityInstance.SendMessage) {
+          try {
+            // Send message to Unity to maintain UI scaling
+            unityInstance.SendMessage('Canvas', 'SetScaleFactor', '1.0');
+          } catch (e) {
+            console.log('Unity message send failed:', e);
+          }
+        }
         
         // Add floating exit button
         addFloatingExitButton();
@@ -254,6 +282,9 @@
       }
 
       function exitFullscreenMode(canvas, container) {
+        // Remove fullscreen class from body
+        document.body.classList.remove('fullscreen-mode');
+        
         // Remove floating exit button
         const floatingBtn = document.getElementById('floating-exit-btn');
         if (floatingBtn) {
@@ -440,13 +471,8 @@
           
           // Enhanced fullscreen functionality with proper UI scaling
           fullscreenBtn.onclick = () => {
-            // Try Unity's fullscreen first
-            if (unityInstance && unityInstance.SetFullscreen) {
-              unityInstance.SetFullscreen(1);
-            } else {
-              // Fallback: CSS-based fullscreen with proper scaling
-              toggleFullscreenMode();
-            }
+            // Always use our custom fullscreen method for proper UI scaling
+            toggleFullscreenMode();
           };
           
           // Auto-start background music (with user interaction)
